@@ -86,6 +86,15 @@ def grouper(dataframe):
 
     data_full.reset_index(inplace=True)
 
+    data_full['1hour_precip'].fillna(0, inplace=True)
+
+    data_full.loc[data_full[data_full['1hour_precip'] > 0.049].index, 'precip'] = 'high'
+    data_full.loc[data_full[data_full['1hour_precip'] <= 0.049].index, 'precip'] = 'low'
+    data_full.loc[data_full[data_full['1hour_precip'] == 0].index, 'precip'] = 'no'
+
+    data_full['precip_shift'] = data_full.precip.shift(-1)
+    data_full = pd.get_dummies(data_full, prefix=None, columns=['precip_shift'], sparse=False, drop_first=False)
+
     return data_full
 
 def weather_cleaner(path='weather-data.txt'):
