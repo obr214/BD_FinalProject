@@ -95,6 +95,8 @@ def grouper(dataframe):
     data_full['precip_shift'] = data_full.precip.shift(-1)
     data_full = pd.get_dummies(data_full, prefix=None, columns=['precip_shift'], sparse=False, drop_first=False)
 
+    data_full = data_full.fillna(method='bfill', axis=0, inplace=False, limit=None, downcast=None)
+
     return data_full
 
 def weather_cleaner(path='weather-data.txt'):
