@@ -99,6 +99,64 @@ def grouper(dataframe):
 
     return data_full
 
+#Interpolation
+### 5 functions:
+### ToTimestamp(d) from date to number
+### toStringDate(d) from number to Date
+### RepeatLast() interpolate by the last number
+### toMinute() from hours to minutes
+### Inter() Interpolate the dataset of weather
+
+def toTimestamp(d):
+    return mktime(utc.localize(d).utctimetuple())
+
+def toStringDate(d):
+    return datetime.fromtimestamp(d)
+
+def repeatLast(left,right, values):
+    right= pd.concat((pd.DataFrame(right),pd.DataFrame(values)),axis=1)
+    right.columns=['first','second']
+    left.columns=['first']
+    inter = left.merge(right, how='left', on='first')
+    return inter.fillna(method='ffill')
+
+
+def toMinute(datatime):
+    date_aux = datatime[0]
+    minute_dates = []
+    while (date_aux <= datatime[len(datatime)-1]): 
+        minute_dates.append(toTimestamp(date_aux))
+        date_aux +=timedelta(minutes=1) # days, seconds, then other fields.
+    return minute_dates
+
+def inter(weather):
+    datatime = pd.to_datetime(weather['datetime'])
+    datatime = datatime.apply(toTimestamp)
+    minute_dates=toMinute(weather['datetime'])
+    wind = np.interp(minute_dates, datatime, weather['wind_speed'])
+    dew = np.interp(minute_dates, datatime, weather['dew_point'])
+    visibility= np.interp(minute_dates, datatime, weather['visibility_miles'])
+    wind_dir= np.interp(minute_dates, datatime, weather['wind_direction'])
+    sea_level= np.interp(minute_dates, datatime, weather['sea_level'])
+    altimeter =  np.interp(minute_dates, datatime, weather['altimeter'])
+    temprature = np.interp(minute_dates, datatime, weather['temprature'])
+    precip=repeatLast(pd.DataFrame(minute_dates),datatime, weather[ 'precip'])
+    precip_shift_high=repeatLast(pd.DataFrame(minute_dates),datatime, weather[ 'precip_shift_high'])
+    precip_shift_low=repeatLast(pd.DataFrame(minute_dates),datatime, weather[ 'precip_shift_low'])
+    precip_shift_no=repeatLast(pd.DataFrame(minute_dates),datatime, weather[ 'precip_shift_no']) 
+    interDf = pd.concat((pd.DataFrame(minute_dates),pd.DataFrame(wind), 
+                      pd.DataFrame(dew),pd.DataFrame(visibility), 
+                      pd.DataFrame(wind_dir),pd.DataFrame(sea_level),
+                      pd.DataFrame(altimeter),pd.DataFrame(temprature),
+                         precip['second'],precip_shift_high['second'],
+                         precip_shift_low['second'], precip_shift_no['second'],
+                     ),axis=1)
+    interDf.columns=['datetime', 'wind_speed', 'dew_point', 'visibility_miles',
+                    'wind_direction', 'sea_level', 'altimeter', 'temperature',
+                    'precip', 'precip_shift_high','precip_shift_low', 'precip_shift_no']
+    interDf['datetime']=interDf['datetime'].apply(toStringDate)
+    return interDf    
+
 def weather_cleaner(path='weather-data.txt'):
     dataframe = data_sampler_renamer_parser(path)
     dataframe = days_fixer(dataframe)
