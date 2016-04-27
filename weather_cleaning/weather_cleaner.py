@@ -1,12 +1,13 @@
 import pandas as pd
 import numpy as np
+from datetime import datetime, timedelta
+from pytz import timezone
 from scipy import stats
-
 
 
 def data_sampler_renamer_parser(path='weather-data.txt'):
 
-    #Take columns that are useful, rename them, parse the timestamp string
+    # Take columns that are useful, rename them, parse the timestamp string
 
     data = pd.read_csv(path, delimiter=r"\s+")
     data_useful = data[
@@ -61,9 +62,10 @@ def days_fixer(dataframe):
 
     return df
 
+
 def grouper(dataframe):
 
-    #Take a subset of colums and group them by time stamp. Afterwards take the mean/mode of the values depending on dataype
+    # Take a subset of colums and group them by time stamp. Afterwards take the mean/mode of the values depending on dataype
 
     sub_df = dataframe[
         ['wind_direction', 'wind_speed', 'cloud_ceiling', 'sky_cover', 'visibility_miles', 'temprature', 'dew_point',
@@ -99,6 +101,39 @@ def grouper(dataframe):
 
     return data_full
 
+
+def convert_gmt_to_easttime(string_date):
+    """
+    :param string_date: GMT date
+    :return: Date converted to eastern time
+    """
+    # Converts the string to datetime object
+    string_date = str(string_date)
+    try:
+        gtm = timezone('GMT')
+        eastern_tz = timezone('US/Eastern')
+
+        date_obj = datetime.strptime(string_date, '%Y-%m-%d %H:%M:%S')
+        date_obj = date_obj.replace(tzinfo=gtm)
+        date_eastern = date_obj.astimezone(eastern_tz)
+        date_str = date_eastern.strftime('%Y-%m-%d %H:%M:%S')
+        return date_str
+
+    except IndexError:
+        return ''
+
+
+def add_easterntime_column(dataframe):
+    """
+    :param dataframe: Weather dataframe
+    :return: dataframe with easter time column
+    """
+    dataframe['est_datetime'] = dataframe['datetime'].apply(convert_gmt_to_easttime)
+    dataframe['est_datetime'] = pd.to_datetime(dataframe['est_datetime'])
+    return dataframe
+
+#Set
+
 #Interpolation
 ### 5 functions:
 ### ToTimestamp(d) from date to number
@@ -110,8 +145,10 @@ def grouper(dataframe):
 def toTimestamp(d):
     return mktime(utc.localize(d).utctimetuple())
 
+
 def toStringDate(d):
     return datetime.fromtimestamp(d)
+
 
 def repeatLast(left,right, values):
     right= pd.concat((pd.DataFrame(right),pd.DataFrame(values)),axis=1)
@@ -128,6 +165,7 @@ def toMinute(datatime):
         minute_dates.append(toTimestamp(date_aux))
         date_aux +=timedelta(minutes=1) # days, seconds, then other fields.
     return minute_dates
+
 
 def inter(weather):
     datatime = pd.to_datetime(weather['datetime'])
@@ -161,6 +199,7 @@ def weather_cleaner(path='weather-data.txt'):
     dataframe = data_sampler_renamer_parser(path)
     dataframe = days_fixer(dataframe)
     dataframe = grouper(dataframe)
+    dataframe = add_easterntime_column(dataframe)
     return dataframe
     
 def weather_minute():
