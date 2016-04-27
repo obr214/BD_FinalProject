@@ -162,3 +162,8 @@ def weather_cleaner(path='weather-data.txt'):
     dataframe = days_fixer(dataframe)
     dataframe = grouper(dataframe)
     return dataframe
+    
+def weather_minute():
+    hour_weather=weather_cleaner()
+    min_weather=inter(hour_weather)
+
