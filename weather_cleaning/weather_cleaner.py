@@ -1,8 +1,10 @@
 import pandas as pd
 import numpy as np
 from datetime import datetime, timedelta
-from pytz import timezone
+from pytz import timezone, utc
 from scipy import stats
+from time import gmtime, strftime, mktime
+
 
 
 def data_sampler_renamer_parser(path='weather-data.txt'):
@@ -205,4 +207,5 @@ def weather_cleaner(path='weather-data.txt'):
 def weather_minute():
     hour_weather=weather_cleaner()
     min_weather=inter(hour_weather)
+    return min_weather
 
