@@ -56,6 +56,7 @@ How to run the charts for the analysis
 
 1) Conduct the join of the tables as mentioned in the previous step.
 2) Once the main table is stored in the main directory, proceed to run the map-reduce tasks:
+        - Tasks can be run on Local Hadoop, or in a Hadoop cluster. We run them in AWS, Amazon Cloud Services.
 	- Each map and reduce task has a number (ie. 1,2,3,4...)
 	- Each map tasks should be run with the respective reduce task over the main datafile, except map7.py that has no reducer (it should be run alone).
         - The result of each map reduce should be stored in a folder with the same number of the respective map.py and reduce.py (ie. map1.py and reduce1.py output should be store in a folder called "1")
