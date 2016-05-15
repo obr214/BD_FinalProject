@@ -47,9 +47,18 @@ To pre-process the weather data, just run the weather_minute() function inside t
 Citi Bike Data Integration with SPARK
 -------------------------
 
-OSVALD
+Once the CitiBike and Weather Datasets are preprocessed, they are ready to be merged.
+For this task, a PySpark script was coded.
+The pyspark script is named: citibike_weather_spark_merger.py
 
-- Finally place the dataset with the name "XXXXXXX" in the root directory of the repository
+Requirements:
+    pytz module installed.
+
+To do the merge the following line should be executed:
+>> spark-submit citibike_weather_spark_merger.py cityBike.csv weather_ready_join
+Where the first parameter is the pyspark script, followed by the citibike dataset and finally the weather dataset
+
+The final output will be saved in a folder named: "citibike_weather"
 
 How to run the charts for the analysis
 --------------------------------------
@@ -65,11 +74,36 @@ How to run the charts for the analysis
 3) Once all the map reduce tasks were conducted, open the Plot.ipynb and Plot 2.ipynb with Jupyter Notebook and execute all the lines.
 4) Once this is done, all the charts shown in the PDF of the report should be displayed. Otherwise, please contact us by e-mail
 
+Visualization Files
+--------------------------------------
+The visualization needs a series of hourly files from where the information is obtained.
+This approach was selected due the limitation that no server can be used to make requests to a database.
+The files generated are small in size. It is not recommended to load a large size file into a web browser since the user experience can be affected in a negative way.
+To create said files, a range of dates can be provided and the amount of files generated will be the number of hours between the given dates.
+
+For one hour of a day, three files are generated:
+- A CSV containing the active stations during that hour with their locations, and number of trips in and out. File used for the Chord Plot and Google Map.
+- A JSON with the transport matrix. File used for the Chord Plot.
+- A CSV containing the interactions between stations (). File used for the Google Map.
+
+
+To generate those files, the script visualization_hourly_files.py should be run.
+It receives as parameters:
+    - The name of the citibike_weather file (The merge produced by the PySpark script).
+    - The name of the stations_list file (Provided - final_station_list.csv. It includes the names, ids and locations of each station).
+    - The Start Date with hour in the format "YYYY-MM-DD HH:MM:SS"
+    - The End Data with hour in the format "YYYY-MM-DD HH:MM:SS"
+    - The name of the folder where the files will be stored. (It should be created before the execution of the script)
+
+Example:
+>> python visualization_hourly_files.py citibike_weather.csv final_station_list.csv '2015-12-01 05:00:00' '2015-12-01 08:00:00' hourly_files
+
 Directories, Files and Modules
 ------------------------------
 
 	/BD_FinalProject
         - README.txt
+    - citibike_weather_spark_merger.py
 	- weather_cleaner.py
 	- plot_functions.py
 	- weather-data.txt
@@ -116,8 +150,7 @@ Copyright and licencing information:
 
 - No code was reused from other sources.
 - The charts created with Plot.ly were mainly based on examples provided in their webpage.
-
+- The visualization uses a Free Distribution Bootstrap Template created by Almsaeed Studio. (Copyright © 2014-2015 Almsaeed Studio. All rights reserved.)
 
 Other considerations
 --------------------
-OSVALD
