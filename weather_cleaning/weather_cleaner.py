@@ -1,8 +1,10 @@
 import pandas as pd
 import numpy as np
 from datetime import datetime, timedelta
-from pytz import timezone
+from pytz import timezone, utc
 from scipy import stats
+from time import gmtime, strftime, mktime
+
 
 
 def data_sampler_renamer_parser(path='weather-data.txt'):
@@ -42,7 +44,7 @@ def days_fixer(dataframe):
     df = dataframe
     df.loc[(df['minutes'].values < 31) & (df['minutes'].values != 0), 'minutes'] = 0
     df.loc[(df['minutes'].values > 30) & (df['minutes'].values != 0), 'hour'] = df[(df.minutes != 0) & (
-        df.minutes > 30)].hour + 1
+    df.minutes > 30)].hour + 1
     df.loc[(df['minutes'].values > 30) & (df['minutes'].values != 0), 'minutes'] = 0
     df.loc[(df['hour'].values == 24), 'day'] = df[df.hour == 24].day + 1
     df.loc[(df['hour'].values == 24), 'hour'] = 0
@@ -143,12 +145,7 @@ def add_easterntime_column(dataframe):
 ### Inter() Interpolate the dataset of weather
 
 def toTimestamp(d):
-    return mktime(utc.localize(d).utctimetuple())
-
-
-def toStringDate(d):
-    return datetime.fromtimestamp(d)
-
+    return mktime(d.timetuple())
 
 def repeatLast(left,right, values):
     right= pd.concat((pd.DataFrame(right),pd.DataFrame(values)),axis=1)
@@ -161,16 +158,17 @@ def repeatLast(left,right, values):
 def toMinute(datatime):
     date_aux = datatime[0]
     minute_dates = []
+    minute_dates_str=[]
     while (date_aux <= datatime[len(datatime)-1]):
         minute_dates.append(toTimestamp(date_aux))
+        minute_dates_str.append(date_aux)
         date_aux +=timedelta(minutes=1) # days, seconds, then other fields.
-    return minute_dates
-
+    return minute_dates, minute_dates_str
 
 def inter(weather):
     datatime = pd.to_datetime(weather['datetime'])
+    minute_dates, minute_dates_str=toMinute(weather['datetime'])
     datatime = datatime.apply(toTimestamp)
-    minute_dates=toMinute(weather['datetime'])
     wind = np.interp(minute_dates, datatime, weather['wind_speed'])
     dew = np.interp(minute_dates, datatime, weather['dew_point'])
     visibility= np.interp(minute_dates, datatime, weather['visibility_miles'])
@@ -178,21 +176,20 @@ def inter(weather):
     sea_level= np.interp(minute_dates, datatime, weather['sea_level'])
     altimeter =  np.interp(minute_dates, datatime, weather['altimeter'])
     temprature = np.interp(minute_dates, datatime, weather['temprature'])
-    precip=repeatLast(pd.DataFrame(minute_dates),datatime, weather[ 'precip'])
-    precip_shift_high=repeatLast(pd.DataFrame(minute_dates),datatime, weather[ 'precip_shift_high'])
-    precip_shift_low=repeatLast(pd.DataFrame(minute_dates),datatime, weather[ 'precip_shift_low'])
-    precip_shift_no=repeatLast(pd.DataFrame(minute_dates),datatime, weather[ 'precip_shift_no'])
-    interDf = pd.concat((pd.DataFrame(minute_dates),pd.DataFrame(wind),
-                         pd.DataFrame(dew),pd.DataFrame(visibility),
-                         pd.DataFrame(wind_dir),pd.DataFrame(sea_level),
-                         pd.DataFrame(altimeter),pd.DataFrame(temprature),
+    precip=repeatLast(pd.DataFrame(minute_dates_str),weather['datetime'], weather[ 'precip'])
+    precip_shift_high=repeatLast(pd.DataFrame(minute_dates_str),weather['datetime'], weather[ 'precip_shift_high'])
+    precip_shift_low=repeatLast(pd.DataFrame(minute_dates_str),weather['datetime'], weather[ 'precip_shift_low'])
+    precip_shift_no=repeatLast(pd.DataFrame(minute_dates_str),weather['datetime'], weather[ 'precip_shift_no'])
+    interDf = pd.concat((pd.DataFrame(minute_dates_str),pd.DataFrame(wind),
+                      pd.DataFrame(dew),pd.DataFrame(visibility), 
+                      pd.DataFrame(wind_dir),pd.DataFrame(sea_level),
+                      pd.DataFrame(altimeter),pd.DataFrame(temprature),
                          precip['second'],precip_shift_high['second'],
                          precip_shift_low['second'], precip_shift_no['second'],
-                         ), axis=1)
-    interDf.columns = ['datetime', 'wind_speed', 'dew_point', 'visibility_miles',
-                     'wind_direction', 'sea_level', 'altimeter', 'temperature',
-                     'precip', 'precip_shift_high','precip_shift_low', 'precip_shift_no']
-    interDf['datetime']=interDf['datetime'].apply(toStringDate)
+                     ),axis=1)
+    interDf.columns=['datetime', 'wind_speed', 'dew_point', 'visibility_miles',
+                    'wind_direction', 'sea_level', 'altimeter', 'temperature',
+                    'precip', 'precip_shift_high','precip_shift_low', 'precip_shift_no']
     return interDf
 
 
@@ -205,6 +202,7 @@ def weather_cleaner(path='weather-data.txt'):
 
 
 def weather_minute():
-    hour_weather = weather_cleaner()
-    min_weather = inter(hour_weather)
+    hour_weather=weather_cleaner()
+    min_weather=inter(hour_weather)
+    return min_weather
 
