@@ -55,7 +55,9 @@ Requirements:
     pytz module installed.
 
 To do the merge the following line should be executed:
->> spark-submit citibike_weather_spark_merger.py cityBike.csv weather_ready_join
+
+`spark-submit citibike_weather_spark_merger.py cityBike.csv weather_ready_join`
+
 Where the first parameter is the pyspark script, followed by the citibike dataset and finally the weather dataset
 
 The final output will be saved in a folder named: "citibike_weather"
@@ -96,7 +98,39 @@ It receives as parameters:
     - The name of the folder where the files will be stored. (It should be created before the execution of the script)
 
 Example:
->> python visualization_hourly_files.py citibike_weather.csv final_station_list.csv '2015-12-01 05:00:00' '2015-12-01 08:00:00' hourly_files
+
+`python visualization_hourly_files.py citibike_weather.csv final_station_list.csv '2015-12-01 05:00:00' '2015-12-01 08:00:00' hourly_files`
+
+Visualization Google Maps and D3
+--------------------------------------
+
+The directory visualization_d3 contains all the files required to run the visualization in a web browser.
+To run it successfully, it is necessary to start an HTTP server (could be using python or nodejs).
+In a web browser, go to localhost and the visualization should appear.
+As we mentioned before the visualization requires files per day and per hour. We are not including the files of all days
+of 2015 (Taking in consideration that we need 3 files per hour and that there are 8,760 hours in a day,
+that would be a total number of 26,280 files required for the whole year. This problem can be solved in the future, using a
+server and making queries from a database).
+We are including files for the first weeks of January, and from the 27th to 29th of October.
+
+
+Once the visualization is running, one must select a day from the datepicker and move the slider
+to select an hour. The visualization is UPDATED ONLY WHEN THE SLIDER IS MOVED.
+Once a date and an hour are set, the system will load the corresponding files (it can take some seconds depending of how
+big is the file), and show the weather for that specific time, the active stations in the map for that particular hour,
+and the chord plot.
+If a click is made over a station in the map, it will show the activity for that station (the number of bikes
+going in and out). In the side bar at the left, the name of the station will appear with the exact number of trips done
+in that hour.
+
+The chord plot shows the interaction of all the stations at that particular time.
+Each chord represents that there were trips between one station and the other.
+This plot can get really tangled due the huge amount of stations involved. Some future work should include a filter
+to show only the most active stations.
+
+
+
+
 
 Directories, Files and Modules
 ------------------------------
